@@ -18,4 +18,4 @@ val any_at_range : Range.t -> AST_generic.program -> AST_generic.any option
 
  * Empty list is returned if no matches are found.
  *)
-val many_at_range : Range.t -> AST_generic.program -> AST_generic.any list
+val many_at_range : Range.t -> AST_generic.program -> AST_generic.any option
