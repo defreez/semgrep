@@ -10,15 +10,18 @@ module R = Mini_rule
 (*****************************************************************************)
 let test_path = "../../../tests/OTHER/synthesizing/targets/"
 
-(* Format: file, list of target ranges, expected pattern lines.
-  For readability, the pattern lines are a list. The pattern is
-  the newline delimited concatenation of the list of lines.
-*)
-let expr_tests =
-  [ ("string_ellipsis.py", [ "2:0-2:13"; "5:0-5:13" ], "foo('...')") ]
+(* Format: file, list of target ranges, expected pattern line. *)
+let stmt_tests =
+  [
+    (* Single statement. *)
+    ("string_ellipsis.py", [ "2:0-2:13"; "5:0-5:13" ], "foo('...')");
+    (* Three targets. *)
+    ("string_ellipsis.py", [ "2:0-2:13"; "5:0-5:13"; "8:0-8:13" ], "foo('...')");
+  ]
 
 let statement_list_tests =
   [
+    (* Motivating example for statement lists. *)
     ("equal_length_assign_call.py", [ "1:0-2:5"; "4:0-5:5" ], "$X = a\nfoo($X)");
     ( "equal_length_assign_call.js",
       [ "1:0-2:7"; "4:0-5:7" ],
@@ -91,6 +94,6 @@ let single_test file linecols expected_pattern =
 
 let unittest =
   "pattern from targets" >:: fun () ->
-  statement_list_tests @ expr_tests
+  stmt_tests @ statement_list_tests
   |> List.iter (fun (file, linecols, expected_pattern) ->
          single_test (test_path ^ file) linecols expected_pattern)

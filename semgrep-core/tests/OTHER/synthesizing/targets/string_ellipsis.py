@@ -6,3 +6,4 @@ foo("string2")
 
 # Target 3
 foo("string3")
+
