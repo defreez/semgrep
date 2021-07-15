@@ -185,6 +185,7 @@ let rec transpose (list : 'a list list) : 'a list list =
 
 (* We can't handle lists of statements of unequal size yet.
  * Check that each target has the same number of statements.
+ *)
 let check_equal_length (targets : 'a list list) : bool =
   match targets with
   | [] -> true
@@ -192,7 +193,6 @@ let check_equal_length (targets : 'a list list) : bool =
       let lengths = List.map List.length targets in
       let hdlen = List.hd lengths in
       List.for_all (( == ) hdlen) lengths
- *)
 
 (*****************************************************************************)
 (* Pattern generation *)
@@ -511,7 +511,9 @@ let split_targets (targets : Pattern.t list) : Pattern.t list list =
     | S s -> [ S s ]
     | _ -> failwith "Unsupported target type"
   in
-  List.map split_target targets
+  let st = List.map split_target targets in
+  if check_equal_length st then st
+  else failwith "Only targets of equal length are supported."
 
 let unwrap_stmt any : AST_generic.stmt =
   match any with S s -> s | _ -> failwith "Expected statement"
