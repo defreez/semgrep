@@ -14,6 +14,8 @@ let test_path = "../../../tests/OTHER/synthesizing/targets/"
   For readability, the pattern lines are a list. The pattern is
   the newline delimited concatenation of the list of lines.
 *)
+let expr_tests =
+  [ ("string_ellipsis.py", [ "2:0-2:13"; "5:0-5:13" ], "foo('...')") ]
 
 let statement_list_tests =
   [
@@ -76,7 +78,9 @@ let single_test file linecols expected_pattern =
     Pretty_print_generic.pattern_to_string lang inferred_pattern
   in
   let ranges_correct =
-    List.for_all2 compare_range ranges_expected ranges_actual
+    List.for_all
+      (fun r -> List.exists (compare_range r) ranges_actual)
+      ranges_expected
   in
   let pattern_correct = actual_pattern = expected_pattern in
   assert_bool "ranges should match" ranges_correct;
@@ -87,6 +91,6 @@ let single_test file linecols expected_pattern =
 
 let unittest =
   "pattern from targets" >:: fun () ->
-  statement_list_tests
+  statement_list_tests @ expr_tests
   |> List.iter (fun (file, linecols, expected_pattern) ->
          single_test (test_path ^ file) linecols expected_pattern)

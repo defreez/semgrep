@@ -508,6 +508,7 @@ let split_targets (targets : Pattern.t list) : Pattern.t list list =
     match t with
     | Ss stmts -> List.map (fun s -> S s) stmts
     | E e -> [ E e ]
+    | S s -> [ S s ]
     | _ -> failwith "Unsupported target type"
   in
   List.map split_target targets
