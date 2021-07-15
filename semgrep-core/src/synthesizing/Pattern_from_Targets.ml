@@ -531,7 +531,7 @@ let join_patterns (patterns : Pattern.t list) : Pattern.t =
 (* Entry point *)
 (*****************************************************************************)
 
-let generate_patterns config (targets : Pattern.t list) lang : Pattern.t =
+let generate_patterns config (targets : AST_generic.any list) lang : Pattern.t =
   global_lang := lang;
   targets |> split_targets
   |> generate_starting_patterns config
