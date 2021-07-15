@@ -12,26 +12,20 @@ let range_to_ast file lang s =
   Constant_propagation.propagate_basic lang ast;
   Constant_propagation.propagate_dataflow ast;
   match a_opt with
-  | [] -> failwith (spf "could not find an expr at range %s in %s" s file)
-  | _ -> a_opt
+  | None -> failwith (spf "could not find an expr at range %s in %s" s file)
+  | Some a -> a
 
 let synthesize_patterns config s file =
   let lang = Lang.langs_of_filename file |> List.hd in
-  (* range_to_ast returns a list of subtrees to be used by Pattern_from_Targets.
-   * Pattern_from_Code only handles a single expression, so we take
-   * the first element here. This matches previous behavior when range_to_ast
-   * returned a single subtree.
-   *)
-  let a = List.hd (range_to_ast file lang s) in
+  (* TODO how to handle Ss here? *)
+  let a = range_to_ast file lang s in
   let patterns = Pattern_from_Code.from_any config a in
   List.map
     (fun (k, v) -> (k, Pretty_print_generic.pattern_to_string lang v))
     patterns
 
 let print_target lang target =
-  let print_pattern_line p = Pretty_print_generic.pattern_to_string lang p in
-  let target_str = List.map print_pattern_line target |> String.concat "\n" in
-  "target: [\n" ^ target_str ^ "\n]\n"
+  Pretty_print_generic.pattern_to_string lang target
 
 let parse_range_args s =
   let rec read_input xs =
@@ -44,15 +38,21 @@ let parse_range_args s =
   in
   read_input s
 
-let parse_targets (args : string list) : Pattern.t list list * Lang.t =
+let parse_targets (args : string list) : Pattern.t list * Lang.t =
   let ranges, file = parse_range_args args in
   let lang = Lang.langs_of_filename file |> List.hd in
   let targets = List.map (range_to_ast file lang) ranges in
   (targets, lang)
 
-let generate_pattern_choices config s =
-  let targets, lang = parse_targets s in
+let print_pattern lang targets pattern =
   List.map (print_target lang) targets
-  @ List.map
-      (Pretty_print_generic.pattern_to_string lang)
-      (Pattern_from_Targets.generate_patterns config targets lang)
+  @ [ Pretty_print_generic.pattern_to_string lang pattern ]
+
+let generate_pattern_from_targets config s =
+  let targets, lang = parse_targets s in
+  let pattern = Pattern_from_Targets.generate_patterns config targets lang in
+  (lang, targets, pattern)
+
+let print_pattern_from_targets config s =
+  let lang, targets, pattern = generate_pattern_from_targets config s in
+  print_pattern lang targets pattern

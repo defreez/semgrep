@@ -90,7 +90,7 @@ let any_at_range r1 ast =
     match expr_at_range r1 ast with None -> None | Some e -> Some (G.E e)
   with Found a -> Some a
 
-let rec many_at_range r1 ast : AST_generic.any list =
+let rec many_at_range_helper r1 ast : AST_generic.any list =
   (* Recurse if there are more tokens in the target. *)
   let rec_if_more found =
     match range_of_ast found with
@@ -100,6 +100,19 @@ let rec many_at_range r1 ast : AST_generic.any list =
         let next_start = tokenrange.end_ + 1 in
         let last = r1.end_ in
         if next_start > last then [ found ]
-        else found :: many_at_range { start = next_start; end_ = last } ast
+        else
+          found :: many_at_range_helper { start = next_start; end_ = last } ast
   in
   match any_at_range r1 ast with None -> [] | Some found -> rec_if_more found
+
+let unwrap_stmt any : AST_generic.stmt =
+  match any with G.S s -> s | _ -> failwith "Expected statement"
+
+let many_at_range r1 ast : AST_generic.any option =
+  let list_form = many_at_range_helper r1 ast in
+  match list_form with
+  | [] -> None
+  | [ G.E e ] -> Some (G.E e)
+  | [ G.S s ] -> Some (G.S s)
+  | G.S _ :: _ -> Some (G.Ss (List.map unwrap_stmt list_form))
+  | _ -> failwith "Unable to handle selection"

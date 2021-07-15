@@ -503,16 +503,38 @@ let rec generate_with_env (target_patterns : pattern_instrs list list) :
       let next' = List.map2 cp_meta_env curpats next in
       List.hd curpats :: generate_with_env (next' :: rest)
 
+let split_targets (targets : Pattern.t list) : Pattern.t list list =
+  let split_target t =
+    match t with
+    | Ss stmts -> List.map (fun s -> S s) stmts
+    | E e -> [ E e ]
+    | S s -> [ S s ]
+    | _ -> failwith "Unsupported target type"
+  in
+  let st = List.map split_target targets in
+  if check_equal_length st then st
+  else failwith "Only targets of equal length are supported."
+
+let unwrap_stmt any : AST_generic.stmt =
+  match any with S s -> s | _ -> failwith "Expected statement"
+
+(* TODO refactor and combine with range_to_ast *)
+let join_patterns (patterns : Pattern.t list) : Pattern.t =
+  match patterns with
+  | [] -> failwith "Empty pattern list"
+  | [ E e ] -> E e
+  | [ S s ] -> S s
+  | S _ :: _ -> Ss (List.map unwrap_stmt patterns)
+  | _ -> failwith "Unable to handle patterns"
+
 (*****************************************************************************)
 (* Entry point *)
 (*****************************************************************************)
 
-let generate_patterns config targets lang =
+let generate_patterns config (targets : AST_generic.any list) lang : Pattern.t =
   global_lang := lang;
-  if check_equal_length targets then
-    targets
-    |> generate_starting_patterns config
-    (* Transpose to intersect across targets, not within. *)
-    |> transpose
-    |> generate_with_env |> List.map extract_pattern
-  else failwith "Only targets of equal length are supported."
+  targets |> split_targets
+  |> generate_starting_patterns config
+  (* Transpose to intersect across targets, not within. *)
+  |> transpose
+  |> generate_with_env |> List.map extract_pattern |> join_patterns
