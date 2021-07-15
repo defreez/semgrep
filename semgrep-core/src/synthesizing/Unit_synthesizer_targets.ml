@@ -39,8 +39,8 @@ let parse_file lang file : AST_generic.program =
   if errors <> [] then failwith (spf "fail to parse %s" file) else ast
 
 let extract_range (m : Pattern_match.t) : Range.t =
-  let sloc, eloc = m.range_loc in
-  Range.range_of_token_locations sloc eloc
+  let start_token_loc, end_token_loc = m.range_loc in
+  Range.range_of_token_locations start_token_loc end_token_loc
 
 (* Evaluates to the ranges that a pattern matches on a file. *)
 let ranges_matched lang file pattern : Range.t list =
